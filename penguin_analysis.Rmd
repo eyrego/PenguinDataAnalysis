@@ -1,0 +1,108 @@
+---
+title: "penguin_analysis"
+output: html_document
+date: "2024-10-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+#do not use me- this is hoarded code which will break lol
+
+#loading libraries
+library(tidyverse)
+library(palmerpenguins)
+library(janitor)
+library(here)
+
+#source function says to R i want you to find this file and use the stuff within this file to run the code laid out below.
+source(here("functions","cleaning.r"))
+
+here::here()
+
+head(penguins_raw)
+
+colnames(penguins_raw)
+
+#this inputs new raw data file in specified folder, which other people can put on their computers. Keeps data safe and recoverable without code altering it.  
+write.csv(penguins_raw, here("data","penguins_raw.csv"))
+
+#removes certain columns as specified by hyphen.Without hyphen, would remove all except column specified (in this case "Comments")
+colnames(penguins_raw)
+penguins_raw <- select(penguins_raw, -Comments)
+colnames(penguins_raw)
+
+#BAD CODE- already overwritten dataframe and trying to overwrite it again. Breaks code computer no likey. 
+colnames(penguins_raw)
+penguins_raw <- select(penguins_raw, -Comments)
+penguins_raw <- select(penguins_raw, -starts_with("Delta"))
+colnames(penguins_raw)
+penguins_raw <- select(penguins_raw, -Comments)
+colnames(penguins_raw)
+
+#loading raw data again
+penguins_raw <- read.csv(here("data","penguins_raw.csv"))
+
+#Show column names
+colnames(penguins_raw)
+
+#Making new variable and removing comments.
+penguins_clean<- select(penguins_raw, -Comments)
+
+#Making new variable and removing delta columns.
+penguins_clean<- select(penguins_clean, -starts_with("Delta"))
+
+#the above is still bad- still overwriting dataframe. 
+
+#Good code- says I want penguins clean from penguins raw. %>% allows you to run multiple steps at same time. Piping is more robust than running each thing separately, and makes everything simpler. 
+#Clean names cleans up column names and formats in way computer can understand.
+penguins_clean <- penguins_raw %>% 
+  select(-Comments) %>% 
+  select(-starts_with("Delta")) %>% 
+  clean_names()
+  
+colnames(penguins_clean)
+
+#making new function
+#remove empty removes completely empty rows and columns. c joins arguments together (so can remove rows and columns at same time)
+#column names now no longer capitalised to prevent overwriting data
+cleaning_penguin_columns <- function(raw_data){
+  raw_data %>% 
+    clean_names() %>% 
+      remove_empty(c("rows", "cols")) %>% 
+      select(-starts_with("delta")) %>% 
+      select(-column_names)}
+#when running function here, nothing happens as we have just defined the function, not actually run it. 
+
+print("removed empty columns, rows, comments, delta, cleaned names")
+penguins_raw <- read.csv(here("data", "penguins_raw.csv"))
+colnames(penguins_raw)
+penguins_clean <- cleaning_penguin_columns(penguins_raw)
+colnames(penguins_clean)
+
+#Makes new file of cleaned data
+write.csv(penguins_clean, here("data","penguins_clean.csv"))
+
+#Makes new r markdown file which can reproducibly clean up penguins data. 
+
